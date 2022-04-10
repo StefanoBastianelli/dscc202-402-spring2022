@@ -59,8 +59,18 @@ print("Created directory `{}` to house the project files.".format(path))
 dbutils.fs.put(path + "MLproject", 
 '''
 
-  FILL_IN
+  name: Lab-03
 
+  conda_env: conda.yaml
+
+
+  entry_points:
+  main:
+    parameters:
+      data_path: {type: str, default: "/dbfs/mnt/training/airbnb/sf-listings/airbnb-cleaned-mlflow.csv"}
+      bootstrap: True
+      in_impurity_decrease: 0
+    command: "python train.py --data_path {data_path} --bootstrap {bootstrap} --in_impurity_decrease {in_impurity_decrease}"
 '''.strip())
 
 # COMMAND ----------
@@ -79,13 +89,31 @@ dbutils.fs.put(path + "MLproject",
 
 # COMMAND ----------
 
-#  TODO
-dbutils.fs.put(path + "conda.yaml", 
+import cloudpickle, numpy, pandas, sklearn, mlflow.sklearn
+#dbutils.fs.put(path + "conda.yaml", 
 '''
 
-  FILL_IN
+file_contents = f"""
+name: Lab-03
+channels:
+  - defaults
+dependencies:
+  - cloudpickle={cloudpickle.__0.5.3__}
+  - numpy={numpy.__1.14.3__}
+  - pandas={pandas.__0.23.0__}
+  - scikit-learn={sklearn.__0.19.1__}
+  - pip:
+    - mlflow=={mlflow.__1.0.0__}
 
-'''.strip())
+'''.strip()
+
+
+
+
+
+#dbutils.fs.put(f"{workingDir}/conda.yaml", file_contents, overwrite=True)
+
+
 
 # COMMAND ----------
 
@@ -100,8 +128,9 @@ dbutils.fs.put(path + "conda.yaml",
 dbutils.fs.put(path + "train.py", 
 '''
 
-  FILL_IN
-  
+from sklearn.ensemble import RandomForestRegressor
+with mlflow.start_run() as run:
+    rf = RandomForestRegressor(data_path=data_path, bootstrap=bootstrap, min_impurity_decrease=min_impurity_decrease)
 '''.strip())
 
 # COMMAND ----------
