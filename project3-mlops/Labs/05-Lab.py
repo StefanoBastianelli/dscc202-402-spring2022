@@ -180,6 +180,7 @@ except ValueError as e:
 
 # TODO
 # Define the model class
+import mlflow.pyfunc
 class RF_with_preprocess(mlflow.pyfunc.PythonModel):
 
     def __init__(self, trained_rf):
@@ -187,8 +188,12 @@ class RF_with_preprocess(mlflow.pyfunc.PythonModel):
 
     def preprocess_input(self, model_input):
         '''return pre-processed model_input'''
-        # FILL_IN
-        return
+        X_test_processed = model_input.copy()
+        X_test_processed["trunc_lat"] = round(X_test_processed['latitude'], 2)
+        X_test_processed["trunc_long"] = round(X_test_processed['longitude'], 2)
+        X_test_processed["review_scores_sum"] = X_test_processed['review_scores_accuracy'] + X_test_processed['review_scores_cleanliness'] + X_test_processed['review_scores_checkin'] + X_test_processed['review_scores_communication'] + X_test_processed['review_scores_location'] +X_test_processed['review_scores_value']
+        X_test_processed = X_test_processed.drop(['longitude', 'latitude'], axis=1)
+        return X_test_processed
     
     def predict(self, context, model_input):
         processed_model_input = self.preprocess_input(model_input.copy())
@@ -202,6 +207,8 @@ class RF_with_preprocess(mlflow.pyfunc.PythonModel):
 # COMMAND ----------
 
 # Construct and save the model
+from mlflow.exceptions import MlflowException
+
 model_path =  f"{workingDir}/RF_with_preprocess/"
 dbutils.fs.rm(model_path, True) # remove folder if already exists
 
@@ -241,15 +248,25 @@ class RF_with_postprocess(mlflow.pyfunc.PythonModel):
 
     def preprocess_input(self, model_input):
         '''return pre-processed model_input'''
-        # FILL_IN
+        X_test_processed = model_input.copy()
+        X_test_processed["trunc_lat"] = round(X_test_processed['latitude'], 2)
+        X_test_processed["trunc_long"] = round(X_test_processed['longitude'], 2)
+        X_test_processed["review_scores_sum"] = X_test_processed['review_scores_accuracy'] + X_test_processed['review_scores_cleanliness'] + X_test_processed['review_scores_checkin'] + X_test_processed['review_scores_communication'] + X_test_processed['review_scores_location'] +X_test_processed['review_scores_value']
+        X_test_processed = X_test_processed.drop(['longitude', 'latitude'], axis=1)
+        return X_test_processed
         return 
       
     def postprocess_result(self, results):
         '''return post-processed results
         Expensive: predicted price > 100
         Not Expensive: predicted price <= 100'''
-        # FILL_IN
-        return 
+        temp = []
+        for i in results:
+            if i > 100:
+                temp.append('Expensive')
+            else:
+                temp.append('Not expensive')
+        return temp
     
     def predict(self, context, model_input):
         processed_model_input = self.preprocess_input(model_input.copy())
