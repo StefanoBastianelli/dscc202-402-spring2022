@@ -88,26 +88,27 @@ df.iloc[:10]
 
 # COMMAND ----------
 
-# TODO
+# TODO  
 # new random forest model
 rf2 = RandomForestRegressor(n_estimators=100, max_depth=25)
 
 # pre-process train data
 X_train_processed = X_train.copy()
-X_train_processed["trunc_lat"] = #FILL_IN
-X_train_processed["trunc_long"] = #FILL_IN
-X_train_processed["review_scores_sum"] = #FILL_IN
-X_train_processed = X_train_processed.drop(FILL_IN, axis=1)
+X_train_processed["trunc_lat"] = round(X_train_processed['latitude'], 2)
+X_train_processed["trunc_long"] = round(X_train_processed['longitude'], 2)
+X_train_processed["review_scores_sum"] = X_train_processed['review_scores_accuracy'] + X_train_processed['review_scores_cleanliness'] + X_train_processed['review_scores_checkin'] + X_train_processed['review_scores_communication'] + X_train_processed['review_scores_location'] +X_train_processed['review_scores_value']
+X_train_processed = X_train_processed.drop(['latitude', 'longitude'], axis=1)
 
 # pre-process test data to obtain MSE
 X_test_processed = X_test.copy()
-X_test_processed["trunc_lat"] = #FILL_IN
-X_test_processed["trunc_long"] = #FILL_IN
-X_test_processed["review_scores_sum"] = #FILL_IN
-X_test_processed = X_test_processed.drop(FILL_IN, axis=1)
+X_test_processed["trunc_lat"] = round(X_test_processed['latitude'], 2)
+X_test_processed["trunc_long"] = round(X_test_processed['longitude'], 2)
+
+X_test_processed["review_scores_sum"] = X_test_processed['review_scores_accuracy'] + X_test_processed['review_scores_cleanliness'] + X_test_processed['review_scores_checkin'] + X_test_processed['review_scores_communication'] + X_test_processed['review_scores_location'] +X_test_processed['review_scores_value']
+X_test_processed = X_test_processed.drop(['longitude', 'latitude'], axis=1)
 
 
-# fit and evaluate new rf model
+#fit and evaluate new rf model
 rf2.fit(X_train_processed, y_train)
 rf2_mse = mean_squared_error(y_test, rf2.predict(X_test_processed))
 
@@ -142,8 +143,8 @@ from  mlflow.tracking import MlflowClient
 client = MlflowClient()
 rf2_run = sorted(client.list_run_infos(experimentID), key=lambda r: r.start_time, reverse=True)[0]
 rf2_path = rf2_run.artifact_uri+"/random-forest-model-preprocess/"
-
-rf2_pyfunc_model = mlflow.pyfunc.load_pyfunc(rf2_path.replace("dbfs:", "/dbfs"))
+rf2_pyfunc_model = mlflow.pyfunc.load_model('dbfs:/databricks/mlflow-tracking/1616927778606270/3f321adc26be4c4998246bef4ea292ad/artifacts/random-forest-model-preprocess/')
+#rf2_pyfunc_model = mlflow.pyfunc.load_pyfunc(rf2_path.replace("dbfs:", "/dbfs"))
 
 # COMMAND ----------
 
