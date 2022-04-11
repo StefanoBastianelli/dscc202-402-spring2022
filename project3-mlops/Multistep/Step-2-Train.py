@@ -1,7 +1,6 @@
 # Databricks notebook source
 # Create widget for parameter passing into the notebook
-dbutils.widgets.text("run_id", "")
-dbutils.widgets.text("path", "")
+
 dbutils.widgets.text("n_estimators", "10")
 dbutils.widgets.text("max_depth", "20")
 dbutils.widgets.text("max_features", "auto")
