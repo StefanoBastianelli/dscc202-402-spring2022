@@ -2,8 +2,7 @@
 dbutils.widgets.text("n_estimators", "100")
 dbutils.widgets.text("learning_rate", "0.1")
 dbutils.widgets.text("max_depth", "1")
-#utils.widgets.text("run_id", "")
-#utils.widgets.text("path", "")
+
 
 
 # TODO
@@ -19,17 +18,12 @@ import os
 import mlflow
 from mlflow.tracking import MlflowClient
 
-#client = MlflowClient()
-#local_dir = "/tmp/artifact_downloads"
-#if not os.path.exists(local_dir):
-#    os.mkdir(local_dir)
-#local_path = client.download_artifacts(dbutils.widgets.get("run_id").strip(), dbutils.widgets.get("path").strip(), local_dir)
-#print("Artifacts downloaded in: {}".format(local_path))
-#print("Artifacts: {}".format(os.listdir(local_path)))
+
 artifact_URI = "/dbfs/mnt/training/airbnb/sf-listings/airbnb-cleaned-mlflow.csv"
 n_estimators = int(dbutils.widgets.get("n_estimators"))    
 learning_rate = float(dbutils.widgets.get("learning_rate"))          
 max_depth = int(dbutils.widgets.get("max_depth"))
+
 #Read from the widgets to create 3 variables.  Be sure to cast the values to numeric types
 #n_estimators = 100
 #learning_rate = 0.1
