@@ -148,32 +148,11 @@ X_train, X_test, y_train, y_test = train_test_split(airbnbDF.drop(["price"], axi
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-rf = RandomForestRegressor(n_estimators=100, max_depth=25)
+rf = RandomForestRegressor(n_estimators=120, max_depth=50)
 rf.fit(X_train, y_train)
 rf_mse = mean_squared_error(y_test, rf.predict(X_test))
 
 r2_score(y_test, rf.predict(X_test))
-
-# COMMAND ----------
-
-from sklearn.linear_model import LinearRegression
-reg = LinearRegression().fit(X_train, y_train)
-r2_score(y_test, reg.predict(X_test))
-
-# COMMAND ----------
-
-from sklearn.linear_model import TweedieRegressor
-reg_t = TweedieRegressor(max_iter = 300, alpha = 0.5)
-reg_t.fit(X_train, y_train)
-
-r2_score(y_test, reg_t.predict(X_test))
-
-# COMMAND ----------
-
-from sklearn import linear_model
-bay = linear_model.BayesianRidge()
-bay.fit(X_train, y_train)
-r2_score(y_test, bay.predict(X_test))
 
 # COMMAND ----------
 
@@ -183,8 +162,8 @@ r2_score(y_test, bay.predict(X_test))
 # COMMAND ----------
 
 # TODO
-rf_mse = mean_squared_error(y_test, rf.predict(X_test))
 
+rf_mse = mean_squared_error(y_test, rf.predict(X_test))
 r2 = r2_score(y_test, rf.predict(X_test))
 rf_mae = mean_absolute_error(y_test, rf.predict(X_test))
 
@@ -197,14 +176,87 @@ rf_mae = mean_absolute_error(y_test, rf.predict(X_test))
 # COMMAND ----------
 
 # TODO
-import mlflow.sklearn
 
+import mlflow.sklearn
+with mlflow.start_run(run_name="RF_final_model") as run: 
+  mlflow.sklearn.log_model(rf, "random-forest-model")
+  mlflow.log_metric("mse", rf_mse)
+  mlflow.log_metric("r2", r2)
+  mlflow.log_metric("mae", rf_mae)
+  mlflow.log_param("n_estimators", 120)
+  mlflow.log_param("max_depth", 50)
+    
+
+  
+  
+  experimentID = run.info.experiment_id
+  artifactURI = mlflow.get_artifact_uri()
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC 
 # MAGIC Change and re-run the above 3 code cells to log different models and/or models with different hyperparameters until you are satisfied with the performance of at least 1 of them.
+
+# COMMAND ----------
+
+from sklearn.linear_model import LinearRegression
+reg = LinearRegression().fit(X_train, y_train)
+reg_mse = mean_squared_error(y_test, reg.predict(X_test))
+reg_r2 = r2_score(y_test, reg.predict(X_test))
+reg_mae = mean_absolute_error(y_test, reg.predict(X_test))
+
+from sklearn.linear_model import TweedieRegressor
+reg_t = TweedieRegressor(max_iter = 300, alpha = 0.5)
+reg_t.fit(X_train, y_train)
+reg_t_mse = mean_squared_error(y_test, reg_t.predict(X_test))
+reg_tr2 = r2_score(y_test, reg_t.predict(X_test))
+reg_tmae = mean_absolute_error(y_test, reg_t.predict(X_test))
+
+
+
+from sklearn import linear_model
+bay = linear_model.BayesianRidge(n_iter=300, tol=0.001, alpha_1=1e-06, alpha_2=1e-06, lambda_1=1e-06, lambda_2=1e-06)
+bay.fit(X_train, y_train)
+bay_mse = mean_squared_error(y_test, bay.predict(X_test))
+bay_r2 = r2_score(y_test, bay.predict(X_test))
+bay_mae = mean_absolute_error(y_test, bay.predict(X_test))
+
+with mlflow.start_run(run_name="linear_reg") as run: 
+  mlflow.sklearn.log_model(reg, "linear_reg-model")
+  mlflow.log_metric("mse", reg_mse)
+  mlflow.log_metric("r2", reg_r2)
+  mlflow.log_metric("reg_mae", rf_mae)
+  
+  experimentID = run.info.experiment_id
+  artifactURI1 = mlflow.get_artifact_uri()
+
+
+with mlflow.start_run(run_name="reg_t") as run: 
+  mlflow.sklearn.log_model(reg_t, "reg_t-model")
+  mlflow.log_metric("mse", reg_t_mse)
+  mlflow.log_metric("r2", reg_tr2)
+  mlflow.log_metric("reg_mae", reg_tmae)
+  mlflow.log_param("max_iter", 300)
+  mlflow.log_param("alpha", 0.5)
+  
+  experimentID = run.info.experiment_id
+  artifactURI2 = mlflow.get_artifact_uri()
+
+with mlflow.start_run(run_name="BayesianRidge") as run: 
+  mlflow.sklearn.log_model(bay, "BayesianRidge-model")
+  mlflow.log_metric("mse", bay_mse)
+  mlflow.log_metric("r2", bay_r2)
+  mlflow.log_metric("reg_mae", bay_mae)
+  mlflow.log_param("max_iter", 300)
+  mlflow.log_param("tol", 0.001)
+  mlflow.log_param("alpha_1", 1e-06)
+  mlflow.log_param("alpha_2", 1e-06)
+  mlflow.log_param("lambda_1", 1e-06)
+  mlflow.log_param("lambda_2", 1e-06)
+    
+  experimentID = run.info.experiment_id
+  artifactURI3 = mlflow.get_artifact_uri()
 
 # COMMAND ----------
 
@@ -216,6 +268,13 @@ import mlflow.sklearn
 
 # TODO
 import mlflow.pyfunc
+from  mlflow.tracking import MlflowClient
+
+client = MlflowClient()
+#reg_run = sorted(client.list_run_infos(experimentID), key=lambda r: r.start_time, reverse=True)[0]
+#reg_path = rf2_run.artifact_uri+"/random-forest-model-preprocess/"
+rf2_pyfunc_model = mlflow.pyfunc.load_model('dbfs:/databricks/mlflow-tracking/1616927778606363/1f292edcc32e42ed831e955794848e3b/artifacts/linear_reg-model')
+#rf2_pyfunc_model = mlflow.pyfunc.load_pyfunc(rf2_path.replace("dbfs:", "/dbfs"))
 
 # COMMAND ----------
 
@@ -240,8 +299,10 @@ class Airbnb_Model(mlflow.pyfunc.PythonModel):
     def __init__(self, model):
         self.model = model
     
-    def predict(self, context, model_input):
-        # FILL_IN
+    def predict(self,model_input):
+        
+        results = self.model.predict(model_input)
+        return results
 
 
 # COMMAND ----------
@@ -254,7 +315,14 @@ class Airbnb_Model(mlflow.pyfunc.PythonModel):
 # TODO
 final_model_path =  f"{working_path}/final-model"
 
-# FILL_IN
+dbutils.fs.rm(final_model_path, True)
+
+reg_postprocess_model = Airbnb_Model(model = reg)
+mlflow.pyfunc.save_model(path=final_model_path.replace("dbfs:", "/dbfs"), python_model=reg_postprocess_model)
+
+
+
+
 
 # COMMAND ----------
 
@@ -264,6 +332,9 @@ final_model_path =  f"{working_path}/final-model"
 # COMMAND ----------
 
 # TODO
+loaded_preprocess_model = mlflow.pyfunc.load_pyfunc(final_model_path.replace("dbfs:", "/dbfs"))
+
+loaded_preprocess_model.predict(X_test)
 
 # COMMAND ----------
 
