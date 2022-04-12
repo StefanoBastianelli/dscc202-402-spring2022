@@ -66,6 +66,11 @@ display(airbnbDF)
 # COMMAND ----------
 
 # TODO
+                  
+airbnbDF["price"] = airbnbDF["price"].str.replace("$","")
+airbnbDF["price"] = airbnbDF["price"].str.replace(",","")
+airbnbDF['price'] = airbnbDF['price'].astype(float)
+            
 
 # COMMAND ----------
 
@@ -77,6 +82,17 @@ display(airbnbDF)
 # COMMAND ----------
 
 # TODO
+airbnbDF = airbnbDF.drop(['host_is_superhost', 'cancellation_policy','instant_bookable'], axis=1)
+
+# COMMAND ----------
+
+airbnbDF = airbnbDF.round({"latitude":2, "longitude":2})
+
+
+
+airbnbDF["review_scores_sum"] = airbnbDF['review_scores_accuracy'] + airbnbDF['review_scores_cleanliness'] + airbnbDF['review_scores_checkin'] + airbnbDF['review_scores_communication'] + airbnbDF['review_scores_location'] +airbnbDF['review_scores_value']
+
+airbnbDF = airbnbDF.drop(['review_scores_accuracy', 'review_scores_cleanliness','review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'review_scores_value'], axis=1)
 
 # COMMAND ----------
 
@@ -86,7 +102,17 @@ display(airbnbDF)
 
 # COMMAND ----------
 
-# TODO
+from sklearn.preprocessing import OneHotEncoder
+encoder = OneHotEncoder()
+encoder_df = pd.DataFrame(encoder.fit_transform(airbnbDF[['neighbourhood_cleansed', 'property_type','room_type', 'bed_type']]).toarray())
+airbnbDF = airbnbDF.join(encoder_df)
+airbnbDF = airbnbDF.dropna()
+
+airbnbDF = airbnbDF.drop(['neighbourhood_cleansed', 'property_type','room_type', 'bed_type'], axis=1)
+
+# COMMAND ----------
+
+airbnbDF
 
 # COMMAND ----------
 
@@ -99,7 +125,7 @@ display(airbnbDF)
 
 # TODO
 from sklearn.model_selection import train_test_split
-
+X_train, X_test, y_train, y_test = train_test_split(airbnbDF.drop(["price"], axis=1), airbnbDF[["price"]].values.ravel(), random_state=42)
 
 # COMMAND ----------
 
@@ -119,6 +145,35 @@ from sklearn.model_selection import train_test_split
 # COMMAND ----------
 
 # TODO
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+rf = RandomForestRegressor(n_estimators=100, max_depth=25)
+rf.fit(X_train, y_train)
+rf_mse = mean_squared_error(y_test, rf.predict(X_test))
+
+r2_score(y_test, rf.predict(X_test))
+
+# COMMAND ----------
+
+from sklearn.linear_model import LinearRegression
+reg = LinearRegression().fit(X_train, y_train)
+r2_score(y_test, reg.predict(X_test))
+
+# COMMAND ----------
+
+from sklearn.linear_model import TweedieRegressor
+reg_t = TweedieRegressor(max_iter = 300, alpha = 0.5)
+reg_t.fit(X_train, y_train)
+
+r2_score(y_test, reg_t.predict(X_test))
+
+# COMMAND ----------
+
+from sklearn import linear_model
+bay = linear_model.BayesianRidge()
+bay.fit(X_train, y_train)
+r2_score(y_test, bay.predict(X_test))
 
 # COMMAND ----------
 
@@ -128,6 +183,10 @@ from sklearn.model_selection import train_test_split
 # COMMAND ----------
 
 # TODO
+rf_mse = mean_squared_error(y_test, rf.predict(X_test))
+
+r2 = r2_score(y_test, rf.predict(X_test))
+rf_mae = mean_absolute_error(y_test, rf.predict(X_test))
 
 # COMMAND ----------
 
