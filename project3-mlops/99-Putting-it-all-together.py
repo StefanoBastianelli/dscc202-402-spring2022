@@ -104,7 +104,7 @@ airbnbDF = airbnbDF.drop(['review_scores_accuracy', 'review_scores_cleanliness',
 
 from sklearn.preprocessing import OneHotEncoder
 encoder = OneHotEncoder()
-encoder_df = pd.DataFrame(encoder.fit_transform(airbnbDF[['neighbourhood_cleansed', 'property_type','room_type', 'bed_type']]).toarray())
+encoder_df = pd.DataFrame(encoder.fit_transform(airbnbDF[['property_type','room_type', 'bed_type']]).toarray())
 airbnbDF = airbnbDF.join(encoder_df)
 airbnbDF = airbnbDF.dropna()
 
@@ -207,7 +207,7 @@ reg_r2 = r2_score(y_test, reg.predict(X_test))
 reg_mae = mean_absolute_error(y_test, reg.predict(X_test))
 
 from sklearn.linear_model import TweedieRegressor
-reg_t = TweedieRegressor(max_iter = 300, alpha = 0.5)
+reg_t = TweedieRegressor(max_iter = 1000, alpha = 0.5)
 reg_t.fit(X_train, y_train)
 reg_t_mse = mean_squared_error(y_test, reg_t.predict(X_test))
 reg_tr2 = r2_score(y_test, reg_t.predict(X_test))
@@ -216,7 +216,7 @@ reg_tmae = mean_absolute_error(y_test, reg_t.predict(X_test))
 
 
 from sklearn import linear_model
-bay = linear_model.BayesianRidge(n_iter=300, tol=0.001, alpha_1=1e-06, alpha_2=1e-06, lambda_1=1e-06, lambda_2=1e-06)
+bay = linear_model.BayesianRidge(n_iter=1000, tol=0.001, alpha_1=1e-06, alpha_2=1e-06, lambda_1=1e-06, lambda_2=1e-06)
 bay.fit(X_train, y_train)
 bay_mse = mean_squared_error(y_test, bay.predict(X_test))
 bay_r2 = r2_score(y_test, bay.predict(X_test))
@@ -273,7 +273,7 @@ from  mlflow.tracking import MlflowClient
 client = MlflowClient()
 #reg_run = sorted(client.list_run_infos(experimentID), key=lambda r: r.start_time, reverse=True)[0]
 #reg_path = rf2_run.artifact_uri+"/random-forest-model-preprocess/"
-rf2_pyfunc_model = mlflow.pyfunc.load_model('dbfs:/databricks/mlflow-tracking/1616927778606363/1f292edcc32e42ed831e955794848e3b/artifacts/linear_reg-model')
+rf2_pyfunc_model = mlflow.pyfunc.load_model('dbfs:/databricks/mlflow-tracking/1616927778606363/c72f128cd03f4ab48f974b9e74af0ee0/artifacts/linear_reg-model')
 #rf2_pyfunc_model = mlflow.pyfunc.load_pyfunc(rf2_path.replace("dbfs:", "/dbfs"))
 
 # COMMAND ----------
@@ -297,12 +297,13 @@ rf2_pyfunc_model = mlflow.pyfunc.load_model('dbfs:/databricks/mlflow-tracking/16
 class Airbnb_Model(mlflow.pyfunc.PythonModel):
 
     def __init__(self, model):
-        self.model = model
+        self.reg = model
     
-    def predict(self,model_input):
+    def predict(self, model_input):
         
-        results = self.model.predict(model_input)
+        results = self.reg.predict(model_input)
         return results
+
 
 
 # COMMAND ----------
@@ -332,7 +333,7 @@ mlflow.pyfunc.save_model(path=final_model_path.replace("dbfs:", "/dbfs"), python
 # COMMAND ----------
 
 # TODO
-loaded_preprocess_model = mlflow.pyfunc.load_pyfunc(final_model_path.replace("dbfs:", "/dbfs"))
+loaded_preprocess_model = mlflow.pyfunc.load_pyfunc('dbfs:/databricks/mlflow-tracking/1616927778606363/c72f128cd03f4ab48f974b9e74af0ee0/artifacts/linear_reg-model')
 
 loaded_preprocess_model.predict(X_test)
 
