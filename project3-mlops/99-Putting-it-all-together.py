@@ -189,7 +189,7 @@ with mlflow.start_run(run_name="RF_final_model") as run:
   
   
   experimentID = run.info.experiment_id
-  artifactURI = mlflow.get_artifact_uri()
+  artifactURI = run.info.artifact_uri
 
 # COMMAND ----------
 
@@ -221,7 +221,7 @@ with mlflow.start_run(run_name="linear_reg") as run:
   mlflow.log_metric("mse", reg_mse)
   mlflow.log_metric("mae", reg_mae)
   experimentID1 = run.info.experiment_id
-  artifactURI1 = mlflow.get_artifact_uri()
+  artifactURI1 = run.info.artifact_uri
 
 
 with mlflow.start_run(run_name="reg_t") as run: 
@@ -232,7 +232,7 @@ with mlflow.start_run(run_name="reg_t") as run:
   mlflow.log_param("alpha", 0.5)
   
   experimentID2 = run.info.experiment_id
-  artifactURI2 = mlflow.get_artifact_uri()
+  artifactURI2 = run.info.artifact_uri
 
 with mlflow.start_run(run_name="BayesianRidge") as run: 
   mlflow.sklearn.log_model(bay, "BayesianRidge-model")
@@ -246,7 +246,7 @@ with mlflow.start_run(run_name="BayesianRidge") as run:
   mlflow.log_param("lambda_2", 1e-06)
     
   experimentID3 = run.info.experiment_id
-  artifactURI3 = mlflow.get_artifact_uri()
+  artifactURI3 = run.info.artifact_uri
 
 # COMMAND ----------
 
@@ -256,15 +256,17 @@ with mlflow.start_run(run_name="BayesianRidge") as run:
 
 # COMMAND ----------
 
+artifactURI1
+
+# COMMAND ----------
+
 # TODO
 import mlflow.pyfunc
+reg_pyfunc_model = mlflow.pyfunc.load_model(model_uri=artifactURI1+"/linear_reg-model")
+type(reg)
 
 
 
-#reg_run = sorted(client.list_run_infos(experimentID), key=lambda r: r.start_time, reverse=True)[0]
-#reg_path = rf2_run.artifact_uri+"/random-forest-model-preprocess/"
-rf2_pyfunc_model = mlflow.pyfunc.load_model('dbfs:/databricks/mlflow-tracking/1616927778606363/6ab2805686d34fbc97abe68b396fdc6f/artifacts/linear_reg-model')
-#rf2_pyfunc_model = mlflow.pyfunc.load_pyfunc(rf2_path.replace("dbfs:", "/dbfs"))
 
 # COMMAND ----------
 
