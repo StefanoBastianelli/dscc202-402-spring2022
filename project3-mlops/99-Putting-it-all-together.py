@@ -256,14 +256,10 @@ with mlflow.start_run(run_name="BayesianRidge") as run:
 
 # COMMAND ----------
 
-artifactURI1
-
-# COMMAND ----------
-
 # TODO
 import mlflow.pyfunc
 reg_pyfunc_model = mlflow.pyfunc.load_model(model_uri=artifactURI1+"/linear_reg-model")
-type(reg)
+type(reg_pyfunc_model)
 
 
 
@@ -291,11 +287,12 @@ class Airbnb_Model(mlflow.pyfunc.PythonModel):
     def __init__(self, model):
         self.reg = model
     
-    def predict(self, model_input):
+    def predict(self, context, model_input):
         
         results = self.reg.predict(model_input)
+        beds = model_input['beds']
         
-        return results
+        return results/model_input['beds']
 
 
 
@@ -307,12 +304,12 @@ class Airbnb_Model(mlflow.pyfunc.PythonModel):
 # COMMAND ----------
 
 # TODO
-final_model_path =  f"{working_path}/final-model"
+final_model_path =  f"{working_path}/linear_reg-model"
 
-dbutils.fs.rm(final_model_path, True)
+#dbutils.fs.rm(final_model_path, True)
 
-reg_postprocess_model = Airbnb_Model(model = reg)
-mlflow.pyfunc.save_model(path=final_model_path.replace("dbfs:", "/dbfs"), python_model=reg_postprocess_model)
+reg_model = Airbnb_Model(model = reg)
+mlflow.pyfunc.save_model(path=final_model_path.replace("dbfs:", "/dbfs"), python_model=reg_model)
 
 
 
@@ -326,13 +323,9 @@ mlflow.pyfunc.save_model(path=final_model_path.replace("dbfs:", "/dbfs"), python
 # COMMAND ----------
 
 # TODO
-loaded_preprocess_model = mlflow.pyfunc.load_model('dbfs:/databricks/mlflow-tracking/1616927778606363/6ab2805686d34fbc97abe68b396fdc6f/artifacts/linear_reg-model')
+loaded_preprocess_model = mlflow.pyfunc.load_model(final_model_path)
 
 loaded_preprocess_model.predict(X_test)
-
-# COMMAND ----------
-
-X_test
 
 # COMMAND ----------
 
