@@ -344,9 +344,21 @@ loaded_preprocess_model.predict(X_test)
 # COMMAND ----------
 
 # TODO
-save the testing data 
+#save the testing data 
 test_data_path = f"{working_path}/test_data.csv"
-# FILL_IN
+dbutils.fs.put(f"{workingDir}/MLproject", 
+'''
+name: Final Model last lab
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      data_path: {type: str, default: test_data_path}
+      
+    command: "python train.py --data_path {data_path}"
+'''.strip())
 
 prediction_path = f"{working_path}/predictions.csv"
 
